@@ -1,8 +1,12 @@
 import React from "react";
 import Image from "next/image";
 import { assets } from "../assets/assets";
+import { useClerk, UserButton } from "@clerk/nextjs";
 
 function Sidebar({ expand, setExpand }) {
+
+  const {openSignIn} = useClerk()
+
   return (
     <div
       className={` flex flex-col justify-between bg-[#212327] pt-7 transition-all z-50 max-md:absolute max-md:h-screen ${
@@ -108,7 +112,7 @@ function Sidebar({ expand, setExpand }) {
             </>
           )}
         </div>
-        <div
+        <div onClick={openSignIn}
           className={`flex items-center ${
             expand ? "hover:bg-white/10 rounded-lg" : "justify-center w-full"
           } gap-3 text-white/60 text-sm p-2 mt-2 cursor-pointer`}
