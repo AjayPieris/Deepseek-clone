@@ -5,6 +5,7 @@ import Image from "next/image";
 import { assets } from "../assets/assets";
 import { useClerk, UserButton } from "@clerk/nextjs";
 import { useAppContext } from "@/context/AppContext";
+import ChatLabel from '../components/ChatLabel'
 
 function Sidebar({ expand, setExpand }) {
   const { openSignIn } = useClerk();
@@ -72,6 +73,7 @@ function Sidebar({ expand, setExpand }) {
         {/* Recents */}
         <div className={`mt-8 bg text-white/25 text-sm ${expand ? "block" : "hidden"}`}>
           <p className="my-1">Recents</p>
+          <ChatLabel/>
         </div>
       </div>
 
