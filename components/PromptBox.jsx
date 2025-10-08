@@ -1,8 +1,9 @@
+"use client"
 import { assets } from '../assets/assets'
 import React, { useState } from 'react'
 import Image from 'next/image'
 
-function PromptBox({ IsLoading, setIsLoading }) {
+function PromptBox({ isLoading, setIsLoading }) {
   const [prompt, setPrompt] = useState("")
 
   const handleSubmit = (e) => {
@@ -57,7 +58,7 @@ function PromptBox({ IsLoading, setIsLoading }) {
           />
           <button
             type="submit"
-            disabled={IsLoading}
+            disabled={isLoading}
             className={`${
               prompt ? "bg-blue-500" : "bg-[#71717a]"
             } rounded-full p-2 cursor-pointer transition`}
