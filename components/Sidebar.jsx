@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { assets } from "../assets/assets";
 import { useClerk, UserButton } from "@clerk/nextjs";
@@ -10,6 +10,7 @@ import ChatLabel from '../components/ChatLabel'
 function Sidebar({ expand, setExpand }) {
   const { openSignIn } = useClerk();
   const { user } = useAppContext();
+  const [openMenu, setOpenMenu] = useState({id:0, open: false})
 
   return (
     <div
@@ -73,7 +74,7 @@ function Sidebar({ expand, setExpand }) {
         {/* Recents */}
         <div className={`mt-8 bg text-white/25 text-sm ${expand ? "block" : "hidden"}`}>
           <p className="my-1">Recents</p>
-          <ChatLabel/>
+          <ChatLabel openMenu={openMenu} setOpenMenu={setOpenMenu}/>
         </div>
       </div>
 
