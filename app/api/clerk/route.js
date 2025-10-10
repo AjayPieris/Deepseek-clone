@@ -1,7 +1,8 @@
-import { Webhook } from "svix";                            //  Import Webhook tool to verify incoming webhooks
+import { messageInRaw, Webhook } from "svix";                            //  Import Webhook tool to verify incoming webhooks
 import connectDB from '../../..//config/db'                
 import User from '../../../models/User'                 
 import headers from 'next/headers'                          
+import { NextRequest } from "next/server";
 
 export async function POST(req) {                           //  Function runs when POST request is received
     const wh = new Webhook(process.env.SIGNING_SECRET);     //  Create webhook object with secret key for security
@@ -24,4 +25,23 @@ export async function POST(req) {                           //  Function runs wh
     };
 
     await connectDB();                                      // 🌐 Connect to MongoDB before saving user
+
+    switch(type) {
+        case 'user.created':
+            await User.create(userData)
+            break;
+
+        case 'user.updated':
+            await User.findByIdAndUpdate(data.id, userData)
+            break;
+
+        case 'user.deleted':
+            await User.findOneAndDelete(data.id)
+            break;
+
+        default:
+            break;
+    }
+
+    return NextRequest.json({message: "Event received"})
 }
