@@ -5,34 +5,25 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req) {
   try {
-    const auth = getAuth(req)                  // Get auth info
+    const auth = getAuth(req)
     const userId = auth.userId
 
-    if (!userId) {                             // Check if user is logged in
-      return NextResponse.json({
-        success: false,
-        message: "User not authenticated",
-      })
+    if (!userId) {
+      return NextResponse.json({ success: false, message: "User not authenticated" })
     }
 
-    const chatData = {                         // Prepare chat data
+    const chatData = {
       userId,
-      messages: [],                             // Make sure it matches model field name
+      messages: [],   // match model field
       name: "New Chat"
     }
 
-    await connectDB()                           // Connect to database
-    await Chat.create(chatData)                 // Create new chat
+    await connectDB()
+    await Chat.create(chatData)
 
-    return NextResponse.json({
-      success: true,
-      message: "Chat Created"
-    })
+    return NextResponse.json({ success: true, message: "Chat Created" })
   } 
-  catch (error) {                               // Catch any errors
-    return NextResponse.json({
-      success: false,
-      message: error.message
-    })
+  catch (error) {
+    return NextResponse.json({ success: false, message: error.message })
   }
 }
