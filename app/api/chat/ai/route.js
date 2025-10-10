@@ -5,58 +5,74 @@ import OpenAI from "openai";
 import Chat from "../../../../models/Chat";
 import connectDB from "../../../../config/db";
 
-//Intialize OpenAI client with DeepSeek Api key and base url
+// Initialize OpenAI client with your OpenRouter API key
 const openai = new OpenAI({
-  baseURL: "https://api.deepseek.com",
-  apiKey: process.env.DEEPSEEK_AP_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY, // <- put your free API key here
 });
 
 export async function POST(req) {
   try {
     const { userId } = getAuth(req);
-    //Extract chatID and prompt from the request body
     const { chatId, prompt } = await req.json();
 
     if (!userId) {
       return NextResponse.json({
         success: false,
-        message: "User Not Authenticated",
+        message: "User not authenticated",
       });
     }
 
-    //find chat document in the database based on userId and chatId
     await connectDB();
-    const data = await Chat.findOne({ userId, _id: chatId });
 
-    //create a user message object
-    const userPrompt = {
+    // Find the chat document
+    const chat = await Chat.findOne({ userId, _id: chatId });
+    if (!chat) {
+      return NextResponse.json({
+        success: false,
+        message: "Chat not found",
+      });
+    }
+
+    // Add user's message to chat
+    const userMessage = {
       role: "user",
-      Content: prompt,
+      content: prompt,
+      timeStamp: Date.now(),
+    };
+    chat.messages.push(userMessage);
+    await chat.save();
+
+    // Send prompt to OpenAI / OpenRouter
+    const completion = await openai.chat.completions.create({
+      model: "openai/gpt-4o", // You can change model if needed
+      messages: [
+        ...chat.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const assistantMessage = {
+      role: "assistant",
+      content: completion.choices[0].message.content,
       timeStamp: Date.now(),
     };
 
-    data.message.push(userPrompt);
-
-    //call the deepseek Api to get a chat compiletion
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "deepseek-chat",
-      store: true,
-    });
-
-    const message = completion.choices[0].message;
-    message.timeStamp = Date.now()
-    data.messages.push(message);
-    data.save();
+    chat.messages.push(assistantMessage);
+    await chat.save();
 
     return NextResponse.json({
-        success: true,
-        data: message
-    })
-
+      success: true,
+      data: assistantMessage,
+    });
   } catch (error) {
-       return NextResponse.json({
-        success: false, error: message
-       })
+    console.error("Chat AI error:", error);
+    return NextResponse.json({
+      success: false,
+      message: error.message || "Something went wrong",
+    });
   }
 }
