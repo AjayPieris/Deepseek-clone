@@ -9,9 +9,16 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",
+    "axios": "^1.12.2",
+    "mongoose": "^8.19.1",
     "next": "15.5.4",
+    "openai": "^6.2.0",
+    "prismjs": "^1.30.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-hot-toast": "^2.6.0",
+    "react-markdown": "^10.1.0",
+    "svix": "^1.76.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
