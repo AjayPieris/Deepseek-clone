@@ -1,20 +1,18 @@
 import mongoose from "mongoose";
 
 const ChatSchema = new mongoose.Schema(
-    {
-        name: { type: String, required: true },
-        messages: [
-            {
-                role: { type: String, required: true },
-                content: { type: String, required: true },   // fixed capitalization
-                timestamp: { type: Number, required: true } // ✅ Use Number, not number
-            }
-        ]
-    },
-    { timestamps: true } // automatically adds createdAt and updatedAt
+  {
+    name: { type: String, required: true },
+    messages: [
+      {
+        role: { type: String, required: true },
+        content: { type: String, required: true },
+        timeStamp: { type: Number, required: true } // ✅ Capital N
+      }
+    ]
+  },
+  { timestamps: true }
 );
 
-const Chat = mongoose.models.Chat || mongoose.model("Chat", ChatSchema); 
-// Reuse existing model if exists, otherwise create new one
-
+const Chat = mongoose.models.Chat || mongoose.model("Chat", ChatSchema);
 export default Chat;
