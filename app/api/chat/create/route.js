@@ -1,37 +1,38 @@
-import connectDB from '../../../../config/db'            // Connect to MongoDB
-import Chat from '../../../../models/Chat'                // Chat model
-import { getAuth } from '@clerk/nextjs/server'            // Get logged-in user info from Clerk
-import { NextResponse } from 'next/server'                // Used to send responses
+import connectDB from '../../../../config/db'
+import Chat from '../../../../models/Chat'
+import { getAuth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-export async function POST(req) {                         // Runs when a POST request is made
-    try {
-        const { userId } = getAuth(req)                   // Get the user's ID from the request
+export async function POST(req) {
+  try {
+    const auth = getAuth(req)                  // Get auth info
+    const userId = auth.userId
 
-        if (!userId) {                                    // If user is not logged in
-            return NextResponse.json({                    
-                success: false, 
-                message: "User not authenticated",         // Return error response
-            })
-        }
-
-        const chatData = {                                // Data to save in the database
-            userId,                                        // User who owns the chat
-            message: [],                                   // Empty message list
-            name: "New Chat"                               // Default chat name
-        }
-
-        await connectDB();                                // Connect to the database
-        await Chat.create(chatData);                      // Create new chat in database
-
-        return NextResponse.json({                        // Return success message
-            success: true, 
-            message: "Chat Created"                        
-        })
-    } 
-    catch (error) {                                       // If any error occurs
-        return NextResponse.json({                        
-            success: false, 
-            message: error.message                         // Return the error message
-        })
+    if (!userId) {                             // Check if user is logged in
+      return NextResponse.json({
+        success: false,
+        message: "User not authenticated",
+      })
     }
+
+    const chatData = {                         // Prepare chat data
+      userId,
+      messages: [],                             // Make sure it matches model field name
+      name: "New Chat"
+    }
+
+    await connectDB()                           // Connect to database
+    await Chat.create(chatData)                 // Create new chat
+
+    return NextResponse.json({
+      success: true,
+      message: "Chat Created"
+    })
+  } 
+  catch (error) {                               // Catch any errors
+    return NextResponse.json({
+      success: false,
+      message: error.message
+    })
+  }
 }
