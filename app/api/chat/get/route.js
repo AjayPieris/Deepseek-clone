@@ -13,11 +13,10 @@ export async function GET(req) {
     }
 
     await connectDB()
-    const data = await Chat.find({ userId }) // fetch all chats for this user
+    const data = await Chat.find({ userId })
 
     return NextResponse.json({ success: true, data })
-  } 
-  catch (error) {
+  } catch (error) {
     return NextResponse.json({ success: false, message: error.message })
   }
 }

@@ -11,7 +11,7 @@ export async function POST(req) {
       return NextResponse.json({ success: false, message: "User not authenticated" })
     }
 
-    const { chatId, name } = await req.json() // POST can read body
+    const { chatId, name } = await req.json()  // ✅ POST can read body
 
     await Chat.findOneAndUpdate(
       { _id: chatId, userId },
@@ -19,8 +19,7 @@ export async function POST(req) {
     )
 
     return NextResponse.json({ success: true, message: "Chat Renamed" })
-  } 
-  catch (error) {
+  } catch (error) {
     return NextResponse.json({ success: false, message: error.message })
   }
 }
