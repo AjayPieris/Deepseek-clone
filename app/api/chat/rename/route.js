@@ -1,5 +1,6 @@
 import Chat from '../../../../models/Chat'
 import { getAuth } from '@clerk/nextjs/server'
+import connectDB from '../../../../config/db'
 import { NextResponse } from 'next/server'
 
 export async function POST(req) {
@@ -11,7 +12,14 @@ export async function POST(req) {
       return NextResponse.json({ success: false, message: "User not authenticated" })
     }
 
-    const { chatId, name } = await req.json()  // ✅ POST can read body
+    const body = await req.json()
+    const { chatId, name } = body
+
+    if (!chatId || !name) {
+      return NextResponse.json({ success: false, message: "chatId and name are required" })
+    }
+
+    await connectDB()
 
     await Chat.findOneAndUpdate(
       { _id: chatId, userId },

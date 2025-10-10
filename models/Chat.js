@@ -1,20 +1,20 @@
-import mongoose from "mongoose";                         
+import mongoose from "mongoose";
 
-const ChatSchema = new mongoose.Schema(                   //  Create a new schema (data structure) for users
+const ChatSchema = new mongoose.Schema(
     {
-        name: {type: String, required: true},
-        messages:[
+        name: { type: String, required: true },
+        messages: [
             {
-                role:{type: String, required: true},
-                Content: {type: String, required: true},
-                timestamp: {type: number , required: true}
+                role: { type: String, required: true },
+                content: { type: String, required: true },   // fixed capitalization
+                timestamp: { type: Number, required: true } // ✅ Use Number, not number
             }
         ]
     },
-    { timestamps: true }                                   //  Auto add createdAt & updatedAt times
+    { timestamps: true } // automatically adds createdAt and updatedAt
 );
 
-const Chat = mongoose.models.User || mongoose.model("Chat", ChatSchema);  
-// 🔁 Reuse existing User model if it exists, or create a new one
+const Chat = mongoose.models.Chat || mongoose.model("Chat", ChatSchema); 
+// Reuse existing model if exists, otherwise create new one
 
-export default Chat;                                      
+export default Chat;

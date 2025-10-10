@@ -1,21 +1,21 @@
-import mongoose from "mongoose";                          // 🧠 Import mongoose to connect and work with MongoDB
+import mongoose from "mongoose";
 
-let cached = global.mongoose || { conn: null, promise: null }; // Reuse existing DB connection if available, else create empty object
+if (!global.mongoose) global.mongoose = { conn: null, promise: null }
+let cached = global.mongoose
 
-export default async function connectDB() {               // ⚙️ Define an async function to connect to MongoDB
-    if (cached.conn) return cached.conn;                  // ✅ If already connected, return existing connection
+export default async function connectDB() {
+    if (cached.conn) return cached.conn
 
-    if (!cached.promise) {                                // 🔍 If no connection is being made yet
-        cached.promise = mongoose                         // 🚀 Start connecting to MongoDB
-            .connect(process.env.MONGODB_URI)             // 🌐 Use the MongoDB URL from .env file
-            .then((mongoose) => mongoose);                // 📦 After connection, return mongoose instance
+    if (!cached.promise) {
+        cached.promise = mongoose.connect(process.env.MONGODB_URI)
     }
 
     try {
-        cached.conn = await cached.promise;               // ⏳ Wait for the connection to finish and store it
+        cached.conn = await cached.promise
     } catch (error) {
-        console.error("Error connecting to MongoDB:", error); 
+        console.error("Error connecting to MongoDB:", error)
+        throw error
     }
 
-    return cached.conn;                                  
+    return cached.conn
 }
