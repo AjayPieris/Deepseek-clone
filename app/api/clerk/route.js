@@ -10,6 +10,7 @@ export async function POST(req) {                           //  Function runs wh
     const headerPayload = await headers();                  //  Get headers from request
     const svixHeaders = {                                   //  Prepare svix security headers
         "svix-id": headerPayload.get("svix-id"),            //  Unique webhook ID
+      "svix-timestamps": headerPayload.get("svix-timestamps"),
         "svix-signature": headerPayload.get("svix-signature") //  Signature to verify source
     };
 
