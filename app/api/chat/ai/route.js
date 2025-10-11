@@ -55,9 +55,9 @@ export const POST = async (req) => {
     chat.messages.push(userMessage);
 
     // --- Gemini API Call ---
+    // FIXED: Changed the model name to a stable, supported version.
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        // Added basic safety settings to prevent responses from being blocked unnecessarily
+        model: "gemini-pro",
         safetySettings: [
             { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
             { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
@@ -66,16 +66,14 @@ export const POST = async (req) => {
         ],
     });
 
-    // The robust buildGeminiHistory function is used here
     const history = buildGeminiHistory(chat.messages.slice(0, -1));
     const geminiChat = model.startChat({ history });
 
     const result = await geminiChat.sendMessage(prompt);
     const response = result.response;
 
-    // Added a check to ensure the response is not empty
     if (!response || !response.text()) {
-        await chat.save(); // Save the user's message even if the AI fails
+        await chat.save();
         throw new Error("Received an empty response from the AI. This might be due to the safety filters.");
     }
     
