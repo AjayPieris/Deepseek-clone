@@ -2,12 +2,13 @@ import mongoose from "mongoose";
 
 const ChatSchema = new mongoose.Schema(
   {
+    userId: { type: String, required: true }, // ✅ add this
     name: { type: String, required: true },
     messages: [
       {
         role: { type: String, required: true },
         content: { type: String, required: true },
-        timeStamp: { type: Number, required: true } // ✅ Capital N
+        timeStamp: { type: Number, required: true },
       }
     ]
   },

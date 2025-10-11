@@ -4,15 +4,21 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "react-hot-toast";
 import { AppContextProvider } from "@/context/AppContext";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
-export const metadata = { title: "deepSeek", description: "Full Stack Project" };
+export const metadata = {
+  title: "deepSeek",
+  description: "Full Stack Project",
+};
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
-      <html>
-        <body>
+    <html lang="en">
+      <body className={inter.variable}>
+        <ClerkProvider>
           <AppContextProvider>
             <Toaster
               toastOptions={{
@@ -22,8 +28,8 @@ export default function RootLayout({ children }) {
             />
             {children}
           </AppContextProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

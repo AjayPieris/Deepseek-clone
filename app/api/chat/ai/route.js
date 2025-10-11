@@ -1,20 +1,18 @@
-export const maxDuration = 60;
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import Chat from "../../../../models/Chat";
 import connectDB from "../../../../config/db";
 
-// Initialize OpenAI client with your OpenRouter API key
+// Initialize OpenAI client with DeepSeek API key and base URL
 const openai = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY, // <- put your free API key here
+  baseURL: "https://api.deepseek.com",
+  apiKey: process.env.DEEPSEEK_API_KEY,
 });
 
-export async function POST(req) {
+export const POST = async (req) => {
   try {
     const { userId } = getAuth(req);
-    const { chatId, prompt } = await req.json();
 
     if (!userId) {
       return NextResponse.json({
@@ -23,44 +21,51 @@ export async function POST(req) {
       });
     }
 
-    await connectDB();
-
-    // Find the chat document
-    const chat = await Chat.findOne({ userId, _id: chatId });
-    if (!chat) {
+    const { chatId, prompt } = await req.json();
+    if (!prompt || !prompt.trim()) {
       return NextResponse.json({
         success: false,
-        message: "Chat not found",
+        message: "Prompt cannot be empty",
       });
     }
 
-    // Add user's message to chat
+    // Connect to MongoDB
+    await connectDB();
+
+    // Find chat by userId and chatId
+    let chat = await Chat.findOne({ userId, _id: chatId });
+
+    // If chat doesn't exist, create a new chat
+    if (!chat) {
+      chat = new Chat({
+        userId,
+        name: "New Chat",
+        messages: [],
+      });
+    }
+
+    // Add user message
     const userMessage = {
       role: "user",
       content: prompt,
       timeStamp: Date.now(),
     };
     chat.messages.push(userMessage);
-    await chat.save();
 
-    // Send prompt to OpenAI / OpenRouter
+    // Call DeepSeek API with full conversation
     const completion = await openai.chat.completions.create({
-      model: "openai/gpt-4o", // You can change model if needed
-      messages: [
-        ...chat.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })),
-        { role: "user", content: prompt },
-      ],
+      model: "deepseek-chat",
+      messages: chat.messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      store: true,
     });
 
-    const assistantMessage = {
-      role: "assistant",
-      content: completion.choices[0].message.content,
-      timeStamp: Date.now(),
-    };
+    const assistantMessage = completion.choices[0].message;
+    assistantMessage.timeStamp = Date.now();
 
+    // Save assistant message
     chat.messages.push(assistantMessage);
     await chat.save();
 
@@ -69,10 +74,10 @@ export async function POST(req) {
       data: assistantMessage,
     });
   } catch (error) {
-    console.error("Chat AI error:", error);
+    console.error("Chat API Error:", error);
     return NextResponse.json({
       success: false,
-      message: error.message || "Something went wrong",
+      error: error.message || "Internal server error",
     });
   }
-}
+};

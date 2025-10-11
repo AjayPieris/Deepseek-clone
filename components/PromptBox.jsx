@@ -20,7 +20,6 @@ function PromptBox({ isLoading, setIsLoading }) {
   const sendPrompt = async () => {
     const promptCopy = prompt;
     if (!user) return toast.error("Login to send message");
-    if (!selectedChat) return toast.error("No chat selected");
     if (isLoading) return toast.error("Wait for the previous prompt response");
     if (!prompt.trim()) return;
 
@@ -34,7 +33,7 @@ function PromptBox({ isLoading, setIsLoading }) {
         timeStamp: Date.now(),
       };
 
-      // Update chats locally
+      // Update local state
       setChats((prevChats) =>
         prevChats.map((chat) =>
           chat._id === selectedChat._id
@@ -43,9 +42,10 @@ function PromptBox({ isLoading, setIsLoading }) {
         )
       );
 
-      setSelectedChat((prev) =>
-        prev ? { ...prev, messages: [...prev.messages, userPrompt] } : prev
-      );
+      setSelectedChat((prev) => ({
+        ...prev,
+        messages: [...prev.messages, userPrompt],
+      }));
 
       // Send prompt to backend
       const { data } = await axios.post("/api/chat/ai", {
@@ -60,6 +60,7 @@ function PromptBox({ isLoading, setIsLoading }) {
           timeStamp: Date.now(),
         };
 
+        // Update local state with assistant response
         setChats((prevChats) =>
           prevChats.map((chat) =>
             chat._id === selectedChat._id
@@ -68,9 +69,10 @@ function PromptBox({ isLoading, setIsLoading }) {
           )
         );
 
-        setSelectedChat((prev) =>
-          prev ? { ...prev, messages: [...prev.messages, assistantMessage] } : prev
-        );
+        setSelectedChat((prev) => ({
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+        }));
       } else {
         toast.error(data.message);
         setPrompt(promptCopy);
