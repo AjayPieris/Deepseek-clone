@@ -1,31 +1,101 @@
-import connectDB from '../../../../config/db'
-import Chat from '../../../../models/Chat'
-import { getAuth } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { getAuth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+// Import additional safety modules from the SDK
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import Chat from "../../../../models/Chat";
+import connectDB from "../../../../config/db";
 
-export async function POST(req) {
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+/**
+ * Builds a valid, alternating history for the Gemini API.
+ * This function is now more robust and will filter out any consecutive
+ * user messages that may have been saved due to previous errors.
+ */
+const buildGeminiHistory = (messages) => {
+    const history = [];
+    let lastRole = null;
+
+    for (const msg of messages) {
+        const role = msg.role === 'assistant' ? 'model' : 'user';
+        // Only add the message if the role is different from the previous one
+        if (role !== lastRole) {
+            history.push({
+                role,
+                parts: [{ text: msg.content }],
+            });
+            lastRole = role;
+        }
+    }
+    return history;
+};
+
+
+export const POST = async (req) => {
   try {
-    const auth = getAuth(req)
-    const userId = auth.userId
+    const { userId } = getAuth(req);
 
     if (!userId) {
-      return NextResponse.json({ success: false, message: "User not authenticated" })
+      return NextResponse.json({ success: false, message: "User not authenticated" });
     }
 
-    const chatData = {
-      userId,
-      messages: [],
-      name: "New Chat"
+    const { chatId, prompt } = await req.json();
+    if (!prompt || !prompt.trim()) {
+      return NextResponse.json({ success: false, message: "Prompt cannot be empty" });
     }
 
-    await connectDB()
-    // Create the new chat and store it in a variable
-    const newChat = await Chat.create(chatData)
+    await connectDB();
+    let chat = await Chat.findOne({ userId, _id: chatId });
 
-    // Return the newly created chat object
-    return NextResponse.json({ success: true, message: "Chat Created", data: newChat })
+    if (!chat) {
+      return NextResponse.json({ success: false, message: "Chat not found" });
+    }
+
+    const userMessage = { role: "user", content: prompt, timeStamp: Date.now() };
+    chat.messages.push(userMessage);
+
+    // --- Gemini API Call ---
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        // Added basic safety settings to prevent responses from being blocked unnecessarily
+        safetySettings: [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+        ],
+    });
+
+    // The robust buildGeminiHistory function is used here
+    const history = buildGeminiHistory(chat.messages.slice(0, -1));
+    const geminiChat = model.startChat({ history });
+
+    const result = await geminiChat.sendMessage(prompt);
+    const response = result.response;
+
+    // Added a check to ensure the response is not empty
+    if (!response || !response.text()) {
+        await chat.save(); // Save the user's message even if the AI fails
+        throw new Error("Received an empty response from the AI. This might be due to the safety filters.");
+    }
+    
+    const text = response.text();
+    // --- End of Gemini API Call ---
+
+    const assistantMessage = { role: "assistant", content: text, timeStamp: Date.now() };
+    chat.messages.push(assistantMessage);
+    await chat.save();
+
+    return NextResponse.json({
+      success: true,
+      data: assistantMessage,
+    });
+
   } catch (error) {
-    console.error("Error in /chat/create:", error)
-    return NextResponse.json({ success: false, message: error.message })
+    console.error("Gemini API Error:", error);
+    return NextResponse.json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
   }
-}
+};
