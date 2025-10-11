@@ -8,7 +8,7 @@ import axios from "axios";
 
 function PromptBox({ isLoading, setIsLoading }) {
   const [prompt, setPrompt] = useState("");
-  const { user, chats, setChats, selectedChat, setSelectedChat } = useAppContext();
+  const { user, setChats, selectedChat, setSelectedChat } = useAppContext();
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -34,18 +34,21 @@ function PromptBox({ isLoading, setIsLoading }) {
       };
 
       // Update local state
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat._id === selectedChat._id
-            ? { ...chat, messages: [...chat.messages, userPrompt] }
-            : chat
-        )
-      );
+      if(selectedChat) {
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === selectedChat._id
+              ? { ...chat, messages: [...chat.messages, userPrompt] }
+              : chat
+          )
+        );
 
-      setSelectedChat((prev) => ({
-        ...prev,
-        messages: [...prev.messages, userPrompt],
-      }));
+        setSelectedChat((prev) => ({
+          ...prev,
+          messages: [...prev.messages, userPrompt],
+        }));
+      }
+
 
       // Send prompt to backend
       const { data } = await axios.post("/api/chat/ai", {
@@ -74,12 +77,29 @@ function PromptBox({ isLoading, setIsLoading }) {
           messages: [...prev.messages, assistantMessage],
         }));
       } else {
+        // This will now correctly display the error from your API
         toast.error(data.message);
         setPrompt(promptCopy);
       }
     } catch (error) {
-      toast.error(error.message || "Something went wrong");
+      // FIXED: Improved error handling to show detailed API error messages.
+      const errorMessage = error.response?.data?.message || error.message || "Something went wrong";
+      toast.error(errorMessage);
+
+      // Restore user prompt and messages on failure
       setPrompt(promptCopy);
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat._id === selectedChat._id
+            ? { ...chat, messages: chat.messages.slice(0, -1) } // remove optimistic user message
+            : chat
+        )
+      );
+      setSelectedChat((prev) => ({
+        ...prev,
+        messages: prev.messages.slice(0, -1), // remove optimistic user message
+      }));
+
     } finally {
       setIsLoading(false);
     }
@@ -102,14 +122,7 @@ function PromptBox({ isLoading, setIsLoading }) {
 
       <div className="flex items-center justify-between text-sm mt-2">
         <div className="flex items-center gap-2">
-          <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full cursor-pointer hover:bg-gray-500/20 transition">
-            <Image src={assets.deepthink_icon} alt="DeepThink" width={16} height={16} />
-            DeepThink (R1)
-          </p>
-          <p className="flex items-center gap-2 text-xs border border-gray-300/40 px-2 py-1 rounded-full cursor-pointer hover:bg-gray-500/20 transition">
-            <Image src={assets.search_icon} alt="Search" width={16} height={16} />
-            Search
-          </p>
+          {/* These can be implemented as features later */}
         </div>
 
         <div className="flex items-center gap-2">
@@ -117,11 +130,11 @@ function PromptBox({ isLoading, setIsLoading }) {
           <button
             type="submit"
             disabled={isLoading || !prompt.trim()}
-            className={`${prompt ? "bg-blue-500" : "bg-[#71717a]"} rounded-full p-2 cursor-pointer transition`}
+            className={`${prompt.trim() ? "bg-blue-500" : "bg-[#71717a]"} rounded-full p-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <Image
               className="w-3.5 aspect-square"
-              src={prompt ? assets.arrow_icon : assets.arrow_icon_dull}
+              src={prompt.trim() ? assets.arrow_icon : assets.arrow_icon_dull}
               alt="Send"
               width={14}
               height={14}

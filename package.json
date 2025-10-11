@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.33.2",
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.12.2",
     "mongoose": "^8.19.1",
     "next": "15.5.4",

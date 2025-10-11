@@ -23,7 +23,8 @@ export const AppContextProvider = ({ children }) => {
             });
 
             if (data.success) {
-                const newChat = { ...data.data, messages: [] }; // ensure messages array
+                // Use the returned chat object which now includes _id and timestamps
+                const newChat = { ...data.data, messages: [] };
                 setChats(prev => [newChat, ...prev]);
                 setSelectedChat(newChat);
             } else {
@@ -34,6 +35,58 @@ export const AppContextProvider = ({ children }) => {
         }
     }
 
+    const deleteChat = async (chatId) => {
+        if (!user) return null;
+        try {
+            const token = await getToken();
+            const { data } = await axios.post('/api/chat/delete', { chatId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (data.success) {
+                toast.success("Chat deleted");
+                const updatedChats = chats.filter(chat => chat._id !== chatId);
+                setChats(updatedChats);
+                // If the deleted chat was selected, select the first one or create a new one
+                if (selectedChat._id === chatId) {
+                    if (updatedChats.length > 0) {
+                        setSelectedChat(updatedChats[0]);
+                    } else {
+                        await createNewChat();
+                    }
+                }
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || "Failed to delete chat");
+        }
+    }
+    
+    const renameChat = async (chatId, newName) => {
+        if (!user || !newName.trim()) return;
+        try {
+            const token = await getToken();
+            const { data } = await axios.post('/api/chat/rename', { chatId, name: newName }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if(data.success) {
+                toast.success("Chat renamed");
+                const updatedChats = chats.map(chat => chat._id === chatId ? {...chat, name: newName} : chat);
+                setChats(updatedChats);
+                if(selectedChat._id === chatId) {
+                    setSelectedChat(prev => ({...prev, name: newName}));
+                }
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || "Failed to rename chat");
+        }
+    }
+
+
     const fetchUserChats = async () => {
         if (!user) return;
         try {
@@ -43,14 +96,13 @@ export const AppContextProvider = ({ children }) => {
             });
 
             if (data.success) {
-                setChats(data.data);
-
-                if (data.data.length === 0) {
+                 if (data.data.length === 0) {
                     await createNewChat();
                 } else {
                     // sort by updatedAt
-                    data.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-                    setSelectedChat({ ...data.data[0], messages: data.data[0].messages || [] });
+                    const sortedChats = data.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                    setChats(sortedChats);
+                    setSelectedChat({ ...sortedChats[0], messages: sortedChats[0].messages || [] });
                 }
             } else {
                 toast.error(data.message);
@@ -61,10 +113,16 @@ export const AppContextProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        if (user) fetchUserChats();
+        if (user) {
+            fetchUserChats();
+        } else {
+            // Clear state on logout
+            setChats([]);
+            setSelectedChat(null);
+        }
     }, [user]);
 
-    const value = { user, chats, setChats, selectedChat, setSelectedChat, fetchUserChats, createNewChat };
+    const value = { user, chats, setChats, selectedChat, setSelectedChat, fetchUserChats, createNewChat, deleteChat, renameChat };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

@@ -1,83 +1,31 @@
-import { getAuth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import OpenAI from "openai";
-import Chat from "../../../../models/Chat";
-import connectDB from "../../../../config/db";
+import connectDB from '../../../../config/db'
+import Chat from '../../../../models/Chat'
+import { getAuth } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-// Initialize OpenAI client with DeepSeek API key and base URL
-const openai = new OpenAI({
-  baseURL: "https://api.deepseek.com",
-  apiKey: process.env.DEEPSEEK_API_KEY,
-});
-
-export const POST = async (req) => {
+export async function POST(req) {
   try {
-    const { userId } = getAuth(req);
+    const auth = getAuth(req)
+    const userId = auth.userId
 
     if (!userId) {
-      return NextResponse.json({
-        success: false,
-        message: "User not authenticated",
-      });
+      return NextResponse.json({ success: false, message: "User not authenticated" })
     }
 
-    const { chatId, prompt } = await req.json();
-    if (!prompt || !prompt.trim()) {
-      return NextResponse.json({
-        success: false,
-        message: "Prompt cannot be empty",
-      });
+    const chatData = {
+      userId,
+      messages: [],
+      name: "New Chat"
     }
 
-    // Connect to MongoDB
-    await connectDB();
+    await connectDB()
+    // Create the new chat and store it in a variable
+    const newChat = await Chat.create(chatData)
 
-    // Find chat by userId and chatId
-    let chat = await Chat.findOne({ userId, _id: chatId });
-
-    // If chat doesn't exist, create a new chat
-    if (!chat) {
-      chat = new Chat({
-        userId,
-        name: "New Chat",
-        messages: [],
-      });
-    }
-
-    // Add user message
-    const userMessage = {
-      role: "user",
-      content: prompt,
-      timeStamp: Date.now(),
-    };
-    chat.messages.push(userMessage);
-
-    // Call DeepSeek API with full conversation
-    const completion = await openai.chat.completions.create({
-      model: "deepseek-chat",
-      messages: chat.messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      store: true,
-    });
-
-    const assistantMessage = completion.choices[0].message;
-    assistantMessage.timeStamp = Date.now();
-
-    // Save assistant message
-    chat.messages.push(assistantMessage);
-    await chat.save();
-
-    return NextResponse.json({
-      success: true,
-      data: assistantMessage,
-    });
+    // Return the newly created chat object
+    return NextResponse.json({ success: true, message: "Chat Created", data: newChat })
   } catch (error) {
-    console.error("Chat API Error:", error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || "Internal server error",
-    });
+    console.error("Error in /chat/create:", error)
+    return NextResponse.json({ success: false, message: error.message })
   }
-};
+}

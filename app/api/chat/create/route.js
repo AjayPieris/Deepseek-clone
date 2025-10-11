@@ -14,14 +14,16 @@ export async function POST(req) {
 
     const chatData = {
       userId,
-      messages: [],  // ensure matches Chat schema
+      messages: [],
       name: "New Chat"
     }
 
     await connectDB()
-    await Chat.create(chatData)
+    // Create the new chat and store it in a variable
+    const newChat = await Chat.create(chatData)
 
-    return NextResponse.json({ success: true, message: "Chat Created" })
+    // Return the newly created chat object
+    return NextResponse.json({ success: true, message: "Chat Created", data: newChat })
   } catch (error) {
     console.error("Error in /chat/create:", error)
     return NextResponse.json({ success: false, message: error.message })

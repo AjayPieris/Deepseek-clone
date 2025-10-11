@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import { assets } from "../assets/assets";
 import { useClerk, UserButton } from "@clerk/nextjs";
 import { useAppContext } from "@/context/AppContext";
-import ChatLabel from '../components/ChatLabel'
+import ChatLabel from '../components/ChatLabel';
 
 function Sidebar({ expand, setExpand }) {
   const { openSignIn } = useClerk();
-  const { user } = useAppContext();
-  const [openMenu, setOpenMenu] = useState({id:0, open: false})
+  const { user, chats, createNewChat, selectedChat, setSelectedChat } = useAppContext();
 
   return (
     <div
@@ -30,7 +29,7 @@ function Sidebar({ expand, setExpand }) {
             onClick={() => setExpand(!expand)}
             className="group relative flex items-center justify-center hover:bg-gray-500/20 transition-all duration-300 h-9 w-9 aspect-square rounded-lg cursor-pointer"
           >
-            <Image src={assets.menu_icon} alt="" className="md:hidden" />
+            <Image src={assets.menu_icon} alt="" className="md:hidden w-6" />
             <Image
               src={expand ? assets.sidebar_close_icon : assets.sidebar_icon}
               alt=""
@@ -38,13 +37,13 @@ function Sidebar({ expand, setExpand }) {
             />
             <div
               className={`absolute w-max ${
-                expand ? "left-1/2 -translate-x-1/2 top-12" : "-top-12 left-0"
+                expand ? "left-1/2 -translate-x-1/2 top-12" : "top-1/2 -translate-y-1/2 left-24"
               } opacity-0 group-hover:opacity-100 transition bg-black text-white text-sm px-3 py-2 rounded-lg shadow-lg pointer-events-none`}
             >
               {expand ? "Close sidebar" : "Open sidebar"}
               <div
                 className={`w-3 h-3 absolute bg-black rotate-45 ${
-                  expand ? "left-1/2 -top-1.5 -translate-x-1/2" : "left-4 -bottom-1.5"
+                  expand ? "left-1/2 -top-1.5 -translate-x-1/2" : "left-[-6px] top-1/2 -translate-y-1/2"
                 }`}
               ></div>
             </div>
@@ -53,6 +52,7 @@ function Sidebar({ expand, setExpand }) {
 
         {/* New Chat Button */}
         <button
+          onClick={createNewChat}
           className={`mt-8 flex items-center justify-center cursor-pointer ${
             expand
               ? "bg-primary hover:opacity-90 rounded-2xl gap-2 p-2.5 w-max"
@@ -64,53 +64,29 @@ function Sidebar({ expand, setExpand }) {
             src={expand ? assets.chat_icon : assets.chat_icon_dull}
             alt="New Chat"
           />
-          <div className="absolute w-max -top-12 -right-12 opacity-0 group-hover:opacity-100 transition bg-black text-white text-sm px-3 py-2 rounded-lg shadow-lg pointer-events-none">
+          <div className="absolute w-max top-1/2 -translate-y-1/2 left-24 opacity-0 group-hover:opacity-100 transition bg-black text-white text-sm px-3 py-2 rounded-lg shadow-lg pointer-events-none">
             New chat
-            <div className="w-3 h-3 absolute bg-black rotate-45 left-4 -bottom-1.5"></div>
+            <div className="w-3 h-3 absolute bg-black rotate-45 left-[-6px] top-1/2 -translate-y-1/2"></div>
           </div>
           {expand && <p className="text-white text font-medium">New chat</p>}
         </button>
 
         {/* Recents */}
-        <div className={`mt-8 bg text-white/25 text-sm ${expand ? "block" : "hidden"}`}>
-          <p className="my-1">Recents</p>
-          <ChatLabel openMenu={openMenu} setOpenMenu={setOpenMenu}/>
+        <div className={`mt-8 text-white/25 text-sm ${expand ? "block" : "hidden"}`}>
+          <p className="my-1 px-2">Recents</p>
+          {chats.map(chat => (
+            <ChatLabel
+              key={chat._id}
+              chat={chat}
+              selected={selectedChat?._id === chat._id}
+              onClick={() => setSelectedChat(chat)}
+            />
+          ))}
         </div>
       </div>
 
       {/* Bottom Section */}
       <div>
-        {/* Get App */}
-        <div
-          className={`flex items-center cursor-pointer group relative ${
-            expand
-              ? "gap-1 text-white/80 text-sm p-2.5 border border-primary rounded-lg hover:bg-white/10"
-              : "h-10 w-10 mx-auto hover:bg-gray-500/30 rounded-lg"
-          }`}
-        >
-          <Image
-            className={expand ? "w-5" : "w-6.5 mx-auto"}
-            src={expand ? assets.phone_icon : assets.phone_icon_dull}
-            alt="Get App"
-          />
-          <div
-            className={`absolute -top-60 pb-8 ${!expand && "-right-40"} opacity-0 group-hover:opacity-100 hidden group-hover:block transition`}
-          >
-            <div className="relative w-max bg-black text-white text-sm p-3 rounded-lg shadow-lg">
-              <Image src={assets.qrcode} alt="QR Code" className="w-44" />
-              <p>Scan to get DeepSeek App</p>
-              <div
-                className={`w-3 h-3 absolute bg-black rotate-45 ${expand ? "right-1/2" : "left-4"} -bottom-1.5`}
-              ></div>
-            </div>
-          </div>
-          {expand && (
-            <>
-              <span>Get App</span> <Image alt="" src={assets.new_icon} />
-            </>
-          )}
-        </div>
-
         {/* Profile / Sign-In */}
         <div
           onClick={user ? null : openSignIn}
@@ -119,11 +95,11 @@ function Sidebar({ expand, setExpand }) {
           } gap-3 text-white/60 text-sm p-2 mt-2 cursor-pointer`}
         >
           {user ? (
-            <UserButton />
+            <UserButton afterSignOutUrl="/" />
           ) : (
             <Image src={assets.profile_icon} alt="Profile" className="w-7" />
           )}
-          {expand && <span>My Profile</span>}
+          {expand && <span>{user ? user.fullName : "Sign In"}</span>}
         </div>
       </div>
     </div>
