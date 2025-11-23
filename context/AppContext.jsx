@@ -102,7 +102,9 @@ export const AppContextProvider = ({ children }) => {
                     // sort by updatedAt
                     const sortedChats = data.data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
                     setChats(sortedChats);
-                    setSelectedChat({ ...sortedChats[0], messages: sortedChats[0].messages || [] });
+                    if (sortedChats.length > 0 && sortedChats[0]) {
+                        setSelectedChat({ ...sortedChats[0], messages: sortedChats[0].messages || [] });
+                    }
                 }
             } else {
                 toast.error(data.message);
