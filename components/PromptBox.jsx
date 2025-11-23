@@ -34,7 +34,7 @@ function PromptBox({ isLoading, setIsLoading }) {
       };
 
       // Update local state
-      if(selectedChat) {
+      if (selectedChat) {
         setChats((prevChats) =>
           prevChats.map((chat) =>
             chat._id === selectedChat._id
@@ -48,7 +48,6 @@ function PromptBox({ isLoading, setIsLoading }) {
           messages: [...prev.messages, userPrompt],
         }));
       }
-
 
       // Send prompt to backend
       const { data } = await axios.post("/api/chat/ai", {
@@ -67,7 +66,11 @@ function PromptBox({ isLoading, setIsLoading }) {
         setChats((prevChats) =>
           prevChats.map((chat) =>
             chat._id === selectedChat._id
-              ? { ...chat, messages: [...chat.messages, assistantMessage] }
+              ? {
+                  ...chat,
+                  messages: [...chat.messages, assistantMessage],
+                  name: data.newChatName || chat.name, // Update name if provided
+                }
               : chat
           )
         );
@@ -75,6 +78,7 @@ function PromptBox({ isLoading, setIsLoading }) {
         setSelectedChat((prev) => ({
           ...prev,
           messages: [...prev.messages, assistantMessage],
+          name: data.newChatName || prev.name, // Update name if provided
         }));
       } else {
         // This will now correctly display the error from your API
@@ -83,7 +87,10 @@ function PromptBox({ isLoading, setIsLoading }) {
       }
     } catch (error) {
       // FIXED: Improved error handling to show detailed API error messages.
-      const errorMessage = error.response?.data?.message || error.message || "Something went wrong";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Something went wrong";
       toast.error(errorMessage);
 
       // Restore user prompt and messages on failure
@@ -99,7 +106,6 @@ function PromptBox({ isLoading, setIsLoading }) {
         ...prev,
         messages: prev.messages.slice(0, -1), // remove optimistic user message
       }));
-
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +113,10 @@ function PromptBox({ isLoading, setIsLoading }) {
 
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); sendPrompt(); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        sendPrompt();
+      }}
       className="w-full max-w-2xl bg-[#404045] p-4 rounded-3xl mt-4 transition-all"
     >
       <textarea
@@ -126,11 +135,19 @@ function PromptBox({ isLoading, setIsLoading }) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Image className="w-4 cursor-pointer" src={assets.pin_icon} alt="Pin" width={16} height={16} />
+          <Image
+            className="w-4 cursor-pointer"
+            src={assets.pin_icon}
+            alt="Pin"
+            width={16}
+            height={16}
+          />
           <button
             type="submit"
             disabled={isLoading || !prompt.trim()}
-            className={`${prompt.trim() ? "bg-blue-500" : "bg-[#71717a]"} rounded-full p-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`${
+              prompt.trim() ? "bg-blue-500" : "bg-[#71717a]"
+            } rounded-full p-2 cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <Image
               className="w-3.5 aspect-square"
