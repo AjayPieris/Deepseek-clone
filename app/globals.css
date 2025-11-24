@@ -8,6 +8,13 @@ html {
   @apply scroll-smooth;
 }
 
+/* Use a reliable system-font stack (no remote downloads) to avoid next/font/google warnings */
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 ::-webkit-scrollbar {
   display: none;
 }
