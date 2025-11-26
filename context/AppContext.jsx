@@ -27,11 +27,14 @@ export const AppContextProvider = ({ children }) => {
                 const newChat = { ...data.data, messages: [] };
                 setChats(prev => [newChat, ...prev]);
                 setSelectedChat(newChat);
+                return newChat;
             } else {
                 toast.error(data.message);
+                return null;
             }
         } catch (error) {
             toast.error(error.message || "Failed to create chat");
+            return null;
         }
     }
 

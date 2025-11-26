@@ -8,7 +8,7 @@ import axios from "axios";
 
 function PromptBox({ isLoading, setIsLoading }) {
   const [prompt, setPrompt] = useState("");
-  const { user, setChats, selectedChat, setSelectedChat } = useAppContext();
+  const { user, setChats, selectedChat, setSelectedChat, createNewChat } = useAppContext();
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -26,7 +26,19 @@ function PromptBox({ isLoading, setIsLoading }) {
     setIsLoading(true);
     setPrompt("");
 
+    let currentChat = selectedChat;
+
     try {
+      // Create new chat if none selected
+      if (!currentChat) {
+        currentChat = await createNewChat();
+        if (!currentChat) {
+          setIsLoading(false);
+          setPrompt(promptCopy);
+          return;
+        }
+      }
+
       const userPrompt = {
         role: "user",
         content: promptCopy,
@@ -34,24 +46,22 @@ function PromptBox({ isLoading, setIsLoading }) {
       };
 
       // Update local state
-      if (selectedChat) {
-        setChats((prevChats) =>
-          prevChats.map((chat) =>
-            chat._id === selectedChat._id
-              ? { ...chat, messages: [...chat.messages, userPrompt] }
-              : chat
-          )
-        );
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat._id === currentChat._id
+            ? { ...chat, messages: [...chat.messages, userPrompt] }
+            : chat
+        )
+      );
 
-        setSelectedChat((prev) => ({
-          ...prev,
-          messages: [...prev.messages, userPrompt],
-        }));
-      }
+      setSelectedChat((prev) => ({
+        ...prev,
+        messages: [...prev.messages, userPrompt],
+      }));
 
       // Send prompt to backend
       const { data } = await axios.post("/api/chat/ai", {
-        chatId: selectedChat._id,
+        chatId: currentChat._id,
         prompt: promptCopy,
       });
 
@@ -65,7 +75,7 @@ function PromptBox({ isLoading, setIsLoading }) {
         // Update local state with assistant response
         setChats((prevChats) =>
           prevChats.map((chat) =>
-            chat._id === selectedChat._id
+            chat._id === currentChat._id
               ? {
                   ...chat,
                   messages: [...chat.messages, assistantMessage],
@@ -84,6 +94,18 @@ function PromptBox({ isLoading, setIsLoading }) {
         // This will now correctly display the error from your API
         toast.error(data.message);
         setPrompt(promptCopy);
+        // Revert optimistic update
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === currentChat._id
+              ? { ...chat, messages: chat.messages.slice(0, -1) }
+              : chat
+          )
+        );
+        setSelectedChat((prev) => ({
+          ...prev,
+          messages: prev.messages.slice(0, -1),
+        }));
       }
     } catch (error) {
       // FIXED: Improved error handling to show detailed API error messages.
@@ -95,17 +117,23 @@ function PromptBox({ isLoading, setIsLoading }) {
 
       // Restore user prompt and messages on failure
       setPrompt(promptCopy);
-      setChats((prevChats) =>
-        prevChats.map((chat) =>
-          chat._id === selectedChat._id
-            ? { ...chat, messages: chat.messages.slice(0, -1) } // remove optimistic user message
-            : chat
-        )
-      );
-      setSelectedChat((prev) => ({
-        ...prev,
-        messages: prev.messages.slice(0, -1), // remove optimistic user message
-      }));
+      
+      if (currentChat) {
+        setChats((prevChats) =>
+          prevChats.map((chat) =>
+            chat._id === currentChat._id
+              ? { ...chat, messages: chat.messages.slice(0, -1) } // remove optimistic user message
+              : chat
+          )
+        );
+        setSelectedChat((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            messages: prev.messages.slice(0, -1), // remove optimistic user message
+          };
+        });
+      }
     } finally {
       setIsLoading(false);
     }

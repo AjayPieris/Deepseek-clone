@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { assets } from "../assets/assets";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "../components/Sidebar";
 import PromptBox from "../components/PromptBox";
 import Message from "../components/Message";
@@ -11,6 +11,15 @@ export default function Home() {
   const [expand, setExpand] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { selectedChat, createNewChat } = useAppContext();
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [selectedChat?.messages, isLoading]);
 
   const isChatting = selectedChat && selectedChat.messages.length > 0;
 
@@ -57,6 +66,7 @@ export default function Home() {
                     <div className="w-12 h-4 bg-gray-600 rounded-full animate-pulse mt-3"></div>
                   </div>
                 )}
+                <div ref={messagesEndRef} />
               </div>
             </div>
 
