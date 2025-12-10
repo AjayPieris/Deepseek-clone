@@ -17,20 +17,24 @@ async function listModels() {
     // In 0.24.1, it might be different.
     // Let's try to just use a known model to check connectivity first.
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    console.log("Attempting to generate content with gemini-2.0-flash...");
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    console.log("Attempting to generate content with gemini-2.5-flash...");
     const result = await model.generateContent("Hello");
     console.log("Success! Response:", result.response.text());
   } catch (error) {
-    console.error("Error with gemini-2.0-flash:", error.message);
+    console.error("Error with gemini-2.5-flash:", error.message);
 
-    // If that fails, let's try gemini-1.5-flash
+    // If that fails, let's try gemini-2.0-flash-lite
     try {
-      console.log("Attempting to generate content with gemini-1.5-flash...");
-      const modelPro = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      console.log(
+        "Attempting to generate content with gemini-2.0-flash-lite..."
+      );
+      const modelPro = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash-lite",
+      });
       const resultPro = await modelPro.generateContent("Hello");
       console.log(
-        "Success with gemini-1.5-flash! Response:",
+        "Success with gemini-2.0-flash! Response:",
         resultPro.response.text()
       );
     } catch (errorPro) {

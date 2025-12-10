@@ -66,12 +66,12 @@ export const POST = async (req) => {
 
     // --- Gemini API Call ---
     // Allow configuring the model via env var `GEMINI_MODEL`.
-    // Common models: gemini-2.0-flash, gemini-1.5-flash
-    const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+    // Common models: gemini-2.5-flash, gemini-2.0-flash-lite
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     if (!modelName || typeof modelName !== "string") {
       throw new Error(
-        "Invalid GEMINI_MODEL. Set `GEMINI_MODEL` to a valid model name like `gemini-2.0-flash`."
+        "Invalid GEMINI_MODEL. Set `GEMINI_MODEL` to a valid model name like `gemini-2.5-flash`."
       );
     }
 
@@ -147,6 +147,16 @@ export const POST = async (req) => {
     });
   } catch (error) {
     console.error("Gemini API Error:", error);
+
+    // Check for 429 Too Many Requests (Quota Exceeded)
+    if (error.message && error.message.includes("429")) {
+      return NextResponse.json({
+        success: false,
+        message:
+          "You have exceeded your current quota for the Gemini API. Please try again later.",
+      });
+    }
+
     return NextResponse.json({
       success: false,
       message: error.message || "Internal server error",
