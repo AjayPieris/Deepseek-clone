@@ -9,10 +9,19 @@ const ChatSchema = new mongoose.Schema(
         role: { type: String, required: true },
         content: { type: String, required: true },
         timeStamp: { type: Number, required: true },
-      }
-    ]
+        files: [
+          {
+            fileUri: { type: String },
+            mimeType: { type: String },
+            name: { type: String },
+            displayName: { type: String },
+            sizeBytes: { type: Number },
+          },
+        ],
+      },
+    ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Chat = mongoose.models.Chat || mongoose.model("Chat", ChatSchema);

@@ -42,7 +42,7 @@ export const POST = async (req) => {
       });
     }
 
-    const { chatId, prompt } = await req.json();
+    const { chatId, prompt, files } = await req.json();
     if (!prompt || !prompt.trim()) {
       return NextResponse.json({
         success: false,
@@ -61,6 +61,7 @@ export const POST = async (req) => {
       role: "user",
       content: prompt,
       timeStamp: Date.now(),
+      files: files || [],
     };
     chat.messages.push(userMessage);
 
@@ -71,7 +72,7 @@ export const POST = async (req) => {
 
     if (!modelName || typeof modelName !== "string") {
       throw new Error(
-        "Invalid GEMINI_MODEL. Set `GEMINI_MODEL` to a valid model name like `gemini-2.5-flash`."
+        "Invalid GEMINI_MODEL. Set `GEMINI_MODEL` to a valid model name like `gemini-2.5-flash`.",
       );
     }
 
@@ -102,13 +103,27 @@ export const POST = async (req) => {
     const history = buildGeminiHistory(chat.messages.slice(0, -1));
     const geminiChat = model.startChat({ history });
 
-    const result = await geminiChat.sendMessage(prompt);
+    // Build message parts - text + files
+    let messageParts = [{ text: prompt }];
+
+    if (files && files.length > 0) {
+      for (const file of files) {
+        messageParts.push({
+          fileData: {
+            fileUri: file.fileUri,
+            mimeType: file.mimeType,
+          },
+        });
+      }
+    }
+
+    const result = await geminiChat.sendMessage(messageParts);
     const response = result.response;
 
     if (!response || !response.text()) {
       await chat.save();
       throw new Error(
-        "Received an empty response from the AI. This might be due to the safety filters."
+        "Received an empty response from the AI. This might be due to the safety filters.",
       );
     }
 

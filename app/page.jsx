@@ -54,6 +54,7 @@ export default function Home() {
                     role={message.role}
                     content={message.content}
                     timeStamp={message.timeStamp}
+                    files={message.files}
                   />
                 ))}
                 {isLoading && (
@@ -84,9 +85,8 @@ export default function Home() {
             <div className="text-center mb-8">
               <div className="flex items-center gap-3 justify-center">
                 <Image src={assets.logo_icon} alt="" className="h-16 w-16" />
-                <p className="text-2xl font-medium">Hi, I'm DeepSeek.</p>
+                <p className="text-2xl font-medium">How can I help you?</p>
               </div>
-              <p className="text-sm mt-2">How can I help you today?</p>
             </div>
 
             <div className="w-full flex flex-col items-center">
