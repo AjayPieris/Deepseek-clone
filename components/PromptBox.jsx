@@ -231,7 +231,7 @@ function PromptBox({ isLoading, setIsLoading }) {
         e.preventDefault();
         sendPrompt();
       }}
-      className="w-full max-w-2xl bg-[#404045] p-4 rounded-3xl mt-4 transition-all"
+      className="w-full max-w-2xl bg-[#404045] p-3 sm:p-4 rounded-2xl sm:rounded-3xl mt-4 transition-all"
     >
       {/* File Previews */}
       {selectedFiles.length > 0 && (
@@ -277,20 +277,20 @@ function PromptBox({ isLoading, setIsLoading }) {
 
       <textarea
         onKeyDown={handleKeyDown}
-        className="outline-none w-full resize-none overflow-hidden break-words bg-transparent text-white placeholder:text-gray-400"
+        className="outline-none w-full resize-none overflow-hidden break-words bg-transparent text-white text-sm sm:text-base placeholder:text-gray-400"
         rows={2}
         placeholder="Message DeepSeek"
         onChange={(e) => setPrompt(e.target.value)}
         value={prompt}
       />
 
-      <div className="flex items-center justify-between mt-3">
+      <div className="flex items-center justify-between mt-2 sm:mt-3">
         <div className="flex items-center gap-2">
           {/* Deep Thinking Button */}
           <button
             type="button"
             onClick={() => setDeepThinking(!deepThinking)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all border ${
+            className={`flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm transition-all border ${
               deepThinking
                 ? "bg-[#5b8ef4] text-white border-[#5b8ef4]"
                 : "bg-[#3a3a3f] text-white border-[#3a3a3f] hover:bg-[#4a4a4f]"
@@ -309,14 +309,14 @@ function PromptBox({ isLoading, setIsLoading }) {
                 d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
               />
             </svg>
-            <span>Deep thinking</span>
+            <span className="hidden sm:inline">Deep thinking</span>
           </button>
 
           {/* Search Button */}
           <button
             type="button"
             onClick={() => setSearch(!search)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all border ${
+            className={`flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm transition-all border ${
               search
                 ? "bg-[#5b8ef4] text-white border-[#5b8ef4]"
                 : "bg-[#3a3a3f] text-white border-[#3a3a3f] hover:bg-[#4a4a4f]"
@@ -335,7 +335,7 @@ function PromptBox({ isLoading, setIsLoading }) {
                 d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
               />
             </svg>
-            <span>Search</span>
+            <span className="hidden sm:inline">Search</span>
           </button>
 
           {isUploading && (

@@ -1,11 +1,30 @@
 import { assets } from "../assets/assets";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
 
 function ChatLabel({ chat, selected, onClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { renameChat, deleteChat } = useAppContext();
+  const menuRef = useRef(null);
+
+  // Click outside to close menu
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [menuOpen]);
 
   const handleRename = (e) => {
     e.stopPropagation();
@@ -30,7 +49,7 @@ function ChatLabel({ chat, selected, onClick }) {
       className={`flex items-center justify-between p-2 text-white/80 ${selected ? 'bg-white/15' : 'hover:bg-white/10'} rounded-lg text-sm group cursor-pointer relative`}
     >
       <p className="max-w-[80%] truncate">{chat.name}</p>
-      <div className="relative">
+      <div className="relative" ref={menuRef}>
         <Image
           src={assets.three_dots}
           alt="menu"
